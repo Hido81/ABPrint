@@ -4,11 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stampa Bluetooth</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        button {
+            width: 4cm;
+            height: 4cm;
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Stampa su Stampante Termica 6</h2>
+    <h2>Stampa su Stampante Termica 7</h2>
     <button onclick="connectPrinter()">Collega Stampante</button>
-    <button onclick="printText()">Stampa e Taglia</button>
+    <button onclick="printText()">MAGNARE QUA'</button>
 
     <script>
         let printerDevice;
@@ -53,8 +70,8 @@
             let init = new Uint8Array([0x1B, 0x40]); // Reset
             let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); // Centratura
             let bigText = new Uint8Array([0x1D, 0x21, 0x11]); // Doppia altezza e larghezza
-            let veryBigText = new Uint8Array([0x1D, 0x21, 0x22]); // Aumento altezza numero progressivo di 1.5 volte
-            let extraBigText = new Uint8Array([0x1D, 0x21, 0x33]); // Dimensione originale di MAGNARE QUA'
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]); // Carattere molto grande per "MAGNARE QUA'"
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x44]); // Numero progressivo ancora più grande
             
             let textEncoder = new TextEncoder();
             let line1 = textEncoder.encode("Sagra di Cagnola\n");
@@ -69,9 +86,9 @@
                 await printerCharacteristic.writeValue(alignCenter);
                 await printerCharacteristic.writeValue(bigText);
                 await printerCharacteristic.writeValue(line1);
-                await printerCharacteristic.writeValue(extraBigText);
-                await printerCharacteristic.writeValue(line2);
                 await printerCharacteristic.writeValue(veryBigText);
+                await printerCharacteristic.writeValue(line2);
+                await printerCharacteristic.writeValue(extraBigText);
                 await printerCharacteristic.writeValue(line3);
                 await printerCharacteristic.writeValue(bigText);
                 await printerCharacteristic.writeValue(line4);
