@@ -3,120 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stampante Termica</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .button-container {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .print-button {
-            padding: 20px 40px;
-            font-size: 24px;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-width: 150px;
-        }
-        #buttonA {
-            background-color: #4CAF50;
-            color: white;
-        }
-        #buttonB {
-            background-color: #2196F3;
-            color: white;
-        }
-        #appLink {
-            margin-top: 30px;
-            color: #FF5722;
-            font-weight: bold;
-            text-decoration: none;
-        }
-    </style>
+    <title>Stampa Bluetooth</title>
 </head>
 <body>
-    <h1>Controllo Stampante Termica<br>Bluetooth</h1>
-    
-    <div class="button-container">
-        <button id="buttonA" class="print-button">STAMPA A</button>
-        <button id="buttonB" class="print-button">STAMPA B</button>
-    </div>
-
-    <a id="appLink" href="#" style="display:none;">Apri nell'app stampante</a>
-
+    <h2>Stampa su Stampante Termica</h2>
+    <button onclick="connectPrinter()">Collega Stampante</button>
+    <button onclick="printText()">Stampa</button>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const appPackage = 'com.lyaltamizh.simplebluetoothprinter';
-            const appLink = document.getElementById('appLink');
-            
-            function preparePrintData(text) {
-                // Comandi ESC/POS per:
-                // 1. Inizializzazione
-                // 2. Testo grande (2x altezza, 2x larghezza)
-                // 3. Feed carta
-                const escpos = new Uint8Array([
-                    0x1B, 0x40,         // Init
-                    0x1B, 0x21, 0x30,   // Text size 2x2
-                    ...Array.from(text).map(c => c.charCodeAt(0)),
-                    0x0A, 0x0A, 0x0A    // 3 line feeds
-                ]);
-                
-                // Convert to hex string
-                return Array.from(escpos).map(b => 
-                    b.toString(16).padStart(2, '0')).join('');
+        let printerDevice;
+        let printerServer;
+        let printerService;
+        let printerCharacteristic;
+
+        async function connectPrinter() {
+            try {
+                console.log("Cerco stampante...");
+                printerDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true, 
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // UUID di molte stampanti termiche
+                });
+
+                printerServer = await printerDevice.gatt.connect();
+                printerService = await printerServer.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+                printerCharacteristic = await printerService.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+
+                console.log("Stampante connessa!");
+            } catch (error) {
+                console.error("Errore di connessione: ", error);
+            }
+        }
+
+        async function printText() {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
             }
 
-            function sendToPrinter(text) {
-                const printData = preparePrintData(text);
-                const intentUrl = `intent://print?data=${encodeURIComponent(printData)}#Intent;package=${appPackage};scheme=escpos;end;`;
-                
-                // Primo tentativo: apertura diretta dell'intent
-                window.location.href = intentUrl;
-                
-                // Fallback: mostra link alternativo
-                setTimeout(() => {
-                    appLink.style.display = 'block';
-                    appLink.href = intentUrl;
-                    appLink.onclick = () => {
-                        window.location.href = intentUrl;
-                        return false;
-                    };
-                }, 500);
-            }
+            let text = "Hello, World!\n\n";
+            let encoder = new TextEncoder();
+            let data = encoder.encode(text);
 
-            // Event listeners
-            document.getElementById('buttonA').addEventListener('click', () => sendToPrinter('A'));
-            document.getElementById('buttonB').addEventListener('click', () => sendToPrinter('B'));
-
-            // Verifica se l'app è installata
-            if(!/Android/i.test(navigator.userAgent)) {
-                document.body.innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <h2>Questa funzionalità è disponibile solo su Android</h2>
-                        <p>Scansiona questo QR code con il tuo smartphone:</p>
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}" alt="QR Code">
-                    </div>
-                `;
+            try {
+                await printerCharacteristic.writeValue(data);
+                console.log("Testo inviato alla stampante!");
+            } catch (error) {
+                console.error("Errore di stampa: ", error);
             }
-        });
+        }
     </script>
 </body>
 </html>
