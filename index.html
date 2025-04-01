@@ -8,7 +8,8 @@
 <body>
     <h2>Stampa su Stampante Termica</h2>
     <button onclick="connectPrinter()">Collega Stampante</button>
-    <button onclick="printText()">Stampa</button>
+    <button onclick="printText()">Stampa e Taglia</button>
+
     <script>
         let printerDevice;
         let printerServer;
@@ -20,7 +21,7 @@
                 console.log("Cerco stampante...");
                 printerDevice = await navigator.bluetooth.requestDevice({
                     acceptAllDevices: true, 
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // UUID di molte stampanti termiche
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] 
                 });
 
                 printerServer = await printerDevice.gatt.connect();
@@ -46,8 +47,28 @@
             try {
                 await printerCharacteristic.writeValue(data);
                 console.log("Testo inviato alla stampante!");
+
+                await new Promise(resolve => setTimeout(resolve, 500)); 
+
+                await cutPaper();
             } catch (error) {
                 console.error("Errore di stampa: ", error);
+            }
+        }
+
+        async function cutPaper() {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
+            }
+
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]); 
+
+            try {
+                await printerCharacteristic.writeValue(cutCommand);
+                console.log("Comando di taglio inviato!");
+            } catch (error) {
+                console.error("Errore nel taglio della carta: ", error);
             }
         }
     </script>
