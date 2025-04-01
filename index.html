@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stampante Termica Bluetooth</title>
+    <title>Stampante Termica</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,10 +18,13 @@
         h1 {
             color: #333;
             margin-bottom: 30px;
+            text-align: center;
         }
         .button-container {
             display: flex;
             gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .print-button {
             padding: 20px 40px;
@@ -31,6 +34,7 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
+            min-width: 150px;
         }
         #buttonA {
             background-color: #4CAF50;
@@ -40,62 +44,79 @@
             background-color: #2196F3;
             color: white;
         }
-        .print-button:hover {
-            opacity: 0.9;
-            transform: scale(1.05);
+        #appLink {
+            margin-top: 30px;
+            color: #FF5722;
+            font-weight: bold;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <h1>Stampante Termica Bluetooth</h1>
+    <h1>Controllo Stampante Termica<br>Bluetooth</h1>
     
     <div class="button-container">
-        <button id="buttonA" class="print-button">Stampa A</button>
-        <button id="buttonB" class="print-button">Stampa B</button>
+        <button id="buttonA" class="print-button">STAMPA A</button>
+        <button id="buttonB" class="print-button">STAMPA B</button>
     </div>
+
+    <a id="appLink" href="#" style="display:none;">Apri nell'app stampante</a>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Funzione per stampare con formattazione grande
-            function printWithFormatting(text) {
+            const appPackage = 'com.lyaltamizh.simplebluetoothprinter';
+            const appLink = document.getElementById('appLink');
+            
+            function preparePrintData(text) {
                 // Comandi ESC/POS per:
-                // 1. Inizializzare stampante
-                // 2. Impostare testo grande (2x2 size)
-                // 3. Aggiungere feed carta
-                const escposCommands = [
-                    0x1B, 0x40,         // Inizializza
-                    0x1B, 0x21, 0x30,   // Testo doppia grandezza
-                    ...Array.from(text).map(c => c.charCodeAt(0)),  // Testo
-                    0x0A, 0x0A, 0x0A    // 3 linee feed
-                ];
-
-                // Converti in esadecimale per l'app
-                const hexCommand = escposCommands.map(b => b.toString(16).padStart(2, '0')).join('');
-
-                // Invia all'app Simple Bluetooth Printer
-                try {
-                    window.location.href = `intent://print?data=${encodeURIComponent(hexCommand)}#Intent;package=com.lyaltamizh.simplebluetoothprinter;scheme=escpos;end`;
-                } catch (e) {
-                    alert("Errore! Assicurati di avere l'app installata");
-                    console.error(e);
-                }
+                // 1. Inizializzazione
+                // 2. Testo grande (2x altezza, 2x larghezza)
+                // 3. Feed carta
+                const escpos = new Uint8Array([
+                    0x1B, 0x40,         // Init
+                    0x1B, 0x21, 0x30,   // Text size 2x2
+                    ...Array.from(text).map(c => c.charCodeAt(0)),
+                    0x0A, 0x0A, 0x0A    // 3 line feeds
+                ]);
+                
+                // Convert to hex string
+                return Array.from(escpos).map(b => 
+                    b.toString(16).padStart(2, '0')).join('');
             }
 
-            // Assegna funzioni ai pulsanti
-            document.getElementById('buttonA').addEventListener('click', () => printWithFormatting('A'));
-            document.getElementById('buttonB').addEventListener('click', () => printWithFormatting('B'));
-        });
+            function sendToPrinter(text) {
+                const printData = preparePrintData(text);
+                const intentUrl = `intent://print?data=${encodeURIComponent(printData)}#Intent;package=${appPackage};scheme=escpos;end;`;
+                
+                // Primo tentativo: apertura diretta dell'intent
+                window.location.href = intentUrl;
+                
+                // Fallback: mostra link alternativo
+                setTimeout(() => {
+                    appLink.style.display = 'block';
+                    appLink.href = intentUrl;
+                    appLink.onclick = () => {
+                        window.location.href = intentUrl;
+                        return false;
+                    };
+                }, 500);
+            }
 
-        // Messaggio se aperto da desktop
-        if(!/Android/i.test(navigator.userAgent)) {
-            document.body.innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <h2>Questa pagina funziona solo su dispositivi Android</h2>
-                    <p>Scansiona questo QR code con il tuo smartphone:</p>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}" alt="QR Code">
-                </div>
-            `;
-        }
+            // Event listeners
+            document.getElementById('buttonA').addEventListener('click', () => sendToPrinter('A'));
+            document.getElementById('buttonB').addEventListener('click', () => sendToPrinter('B'));
+
+            // Verifica se l'app è installata
+            if(!/Android/i.test(navigator.userAgent)) {
+                document.body.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <h2>Questa funzionalità è disponibile solo su Android</h2>
+                        <p>Scansiona questo QR code con il tuo smartphone:</p>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}" alt="QR Code">
+                    </div>
+                `;
+            }
+        });
     </script>
 </body>
 </html>
