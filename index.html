@@ -6,7 +6,7 @@
     <title>Stampa Bluetooth</title>
 </head>
 <body>
-    <h2>Stampa su Stampante Termica 1</h2>
+    <h2>Stampa su Stampante Termica 2</h2>
     <button onclick="connectPrinter()">Collega Stampante</button>
     <button onclick="printText()">Stampa e Taglia</button>
 
@@ -47,37 +47,23 @@
 
             let esc = '\x1B'; // ESC
             let gs = '\x1D'; // GS
-            let init = esc + "@"; // Reset
-            let alignCenter = esc + "a" + "1"; // Centratura
-            let doubleSize = gs + "!" + "0x11"; // Doppia altezza e larghezza
-            let text = init + alignCenter + doubleSize + numberString + "\n\n";
-
-            let encoder = new TextEncoder();
-            let data = encoder.encode(text);
+            let init = new Uint8Array([0x1B, 0x40]); // Reset
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); // Centratura
+            let doubleSize = new Uint8Array([0x1D, 0x21, 0x11]); // Doppia altezza e larghezza
+            let textData = new TextEncoder().encode(numberString + "\n\n");
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]); // Taglio carta
 
             try {
-                await printerCharacteristic.writeValue(data);
+                await printerCharacteristic.writeValue(init);
+                await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(doubleSize);
+                await printerCharacteristic.writeValue(textData);
                 console.log("Testo inviato alla stampante!");
                 await new Promise(resolve => setTimeout(resolve, 500)); 
-                await cutPaper();
-            } catch (error) {
-                console.error("Errore di stampa: ", error);
-            }
-        }
-
-        async function cutPaper() {
-            if (!printerCharacteristic) {
-                console.error("Stampante non connessa!");
-                return;
-            }
-
-            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]); 
-
-            try {
                 await printerCharacteristic.writeValue(cutCommand);
                 console.log("Comando di taglio inviato!");
             } catch (error) {
-                console.error("Errore nel taglio della carta: ", error);
+                console.error("Errore di stampa: ", error);
             }
         }
     </script>
