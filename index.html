@@ -6,7 +6,7 @@
     <title>Stampa Bluetooth</title>
 </head>
 <body>
-    <h2>Stampa su Stampante Termica 4</h2>
+    <h2>Stampa su Stampante Termica</h2>
     <button onclick="connectPrinter()">Collega Stampante</button>
     <button onclick="printText()">Stampa e Taglia</button>
 
@@ -44,21 +44,23 @@
             let numberString = ticketNumber.toString().padStart(3, '0');
             ticketNumber++;
             localStorage.setItem("ticketNumber", ticketNumber);
-            let today = new Date().toLocaleDateString('it-IT');
+            let now = new Date();
+            let today = now.toLocaleDateString('it-IT');
+            let time = now.toLocaleTimeString('it-IT');
 
             let esc = '\x1B'; // ESC
             let gs = '\x1D'; // GS
             let init = new Uint8Array([0x1B, 0x40]); // Reset
             let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); // Centratura
             let bigText = new Uint8Array([0x1D, 0x21, 0x11]); // Doppia altezza e larghezza
-            let veryBigText = new Uint8Array([0x1D, 0x21, 0x22]); // Aumento 1.5 volte altezza numero
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]); // Raddoppia altezza numero
             
             let textEncoder = new TextEncoder();
             let line1 = textEncoder.encode("Sagra di Cagnola\n");
             let line2 = textEncoder.encode("MAGNARE QUA'\n\n");
             let line3 = textEncoder.encode(numberString + "\n\n");
-            let line4 = textEncoder.encode(today + "\n\n");
-            let space = textEncoder.encode("\n\n");
+            let line4 = textEncoder.encode(today + "\n");
+            let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
             let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]); // Taglio carta
 
             try {
@@ -71,7 +73,7 @@
                 await printerCharacteristic.writeValue(line3);
                 await printerCharacteristic.writeValue(bigText);
                 await printerCharacteristic.writeValue(line4);
-                await printerCharacteristic.writeValue(space);
+                await printerCharacteristic.writeValue(line5);
                 console.log("Testo inviato alla stampante!");
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Attendere per la stampa
                 await printerCharacteristic.writeValue(cutCommand);
