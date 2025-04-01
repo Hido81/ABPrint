@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stampa Bluetooth</title>
+    <title>SAGRA di CAGNOLA 2025</title>
     <style>
         body {
             display: flex;
@@ -21,11 +21,11 @@
             margin-top: 20px;
         }
         button {
-            width: 6cm;
-            height: 6cm;
-            font-size: 1.8rem;
+            width: 8cm;
+            height: 8cm;
+            font-size: 2rem;
             text-align: center;
-            border-radius: 5mm;
+            border-radius: 1cm;
             border: none;
             cursor: pointer;
             font-weight: bold;
@@ -43,14 +43,20 @@
             user-select: none;
             color: #333;
         }
+        footer {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <h2 ondblclick="connectPrinter()">Stampa su Stampante Termica</h2>
+    <h2 ondblclick="connectPrinter()">SAGRA di CAGNOLA 2025</h2>
     <div class="button-container">
         <button class="magnare" onclick="printText('MAGNARE QUA', '')">MAGNARE QUA'</button>
         <button class="portare" onclick="printText('PORTARE VIA', 'A')">PORTARE VIA</button>
     </div>
+    <footer>by SYNERTECHNIK di MARCO IDOLAZZI</footer>
 
     <script>
         let printerDevice;
@@ -75,6 +81,64 @@
                 console.log("Stampante connessa!");
             } catch (error) {
                 console.error("Errore di connessione: ", error);
+            }
+        }
+
+        async function printText(type, prefix) {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
+            }
+
+            let number;
+            if (prefix === 'A') {
+                number = takeawayNumber.toString().padStart(3, '0');
+                takeawayNumber++;
+                localStorage.setItem("takeawayNumber", takeawayNumber);
+            } else {
+                number = ticketNumber.toString().padStart(3, '0');
+                ticketNumber++;
+                localStorage.setItem("ticketNumber", ticketNumber);
+            }
+
+            let now = new Date();
+            let today = now.toLocaleDateString('it-IT');
+            let time = now.toLocaleTimeString('it-IT');
+
+            let esc = '\x1B'; // ESC
+            let gs = '\x1D'; // GS
+            let init = new Uint8Array([0x1B, 0x40]); // Reset
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); // Centratura
+            let bigText = new Uint8Array([0x1D, 0x21, 0x11]); // Doppia altezza e larghezza
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]); // Carattere molto grande per titolo
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x44]); // Numero progressivo molto grande
+            
+            let textEncoder = new TextEncoder();
+            let line1 = textEncoder.encode("Sagra di Cagnola\n");
+            let line2 = textEncoder.encode(type + "\n\n");
+            let line3 = textEncoder.encode(prefix + number + "\n\n");
+            let line4 = textEncoder.encode(today + "\n");
+            let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]); // Taglio carta
+
+            try {
+                await printerCharacteristic.writeValue(init);
+                await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line1);
+                await printerCharacteristic.writeValue(veryBigText);
+                await printerCharacteristic.writeValue(line2);
+                await printerCharacteristic.writeValue(extraBigText);
+                await printerCharacteristic.writeValue(line3);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line4);
+                await printerCharacteristic.writeValue(line5);
+                console.log("Testo inviato alla stampante!");
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Attendere per la stampa
+                await printerCharacteristic.writeValue(cutCommand);
+                console.log("Comando di taglio inviato!");
+            } catch (error) {
+                console.error("Errore di stampa: ", error);
             }
         }
     </script>
