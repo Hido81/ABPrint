@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stampa Termica Lettere</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .print-button {
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .print-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        #buttonA {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #buttonB {
+            background-color: #2196F3;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stampa Termica Lettere</h1>
+    
+    <div class="button-container">
+        <button id="buttonA" class="print-button">Stampa A</button>
+        <button id="buttonB" class="print-button">Stampa B</button>
+    </div>
+
+    <script>
+        document.getElementById('buttonA').addEventListener('click', function() {
+            printLargeCharacter('A');
+        });
+        
+        document.getElementById('buttonB').addEventListener('click', function() {
+            printLargeCharacter('B');
+        });
+        
+        function printLargeCharacter(character) {
+            // Creazione di un documento di stampa con il carattere molto grande
+            const printWindow = window.open('', '_blank');
+            
+            // Stile per il carattere molto grande
+            const style = `
+                <style>
+                    @page {
+                        size: 80mm 100mm; /* Formato comune per stampanti termiche */
+                        margin: 0;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        font-family: Arial, sans-serif;
+                    }
+                    .big-character {
+                        font-size: 100px;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                </style>
+            `;
+            
+            // Contenuto HTML con il carattere grande
+            const content = `
+                ${style}
+                <div class="big-character">${character}</div>
+                <script>
+                    // Stampa automaticamente e chiude la finestra dopo la stampa
+                    setTimeout(function() {
+                        window.print();
+                        setTimeout(function() {
+                            window.close();
+                        }, 100);
+                    }, 100);
+                </script>
+            `;
+            
+            printWindow.document.open();
+            printWindow.document.write(content);
+            printWindow.document.close();
+        }
+    </script>
+</body>
+</html>
