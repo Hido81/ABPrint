@@ -22,7 +22,6 @@
         .button-container {
             display: flex;
             gap: 20px;
-            margin-bottom: 20px;
         }
         .print-button {
             padding: 20px 40px;
@@ -45,22 +44,6 @@
             opacity: 0.9;
             transform: scale(1.05);
         }
-        .custom-text {
-            margin-top: 30px;
-        }
-        #textInput {
-            padding: 10px;
-            font-size: 16px;
-            width: 200px;
-        }
-        #printCustom {
-            padding: 10px 20px;
-            background-color: #FF9800;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -71,61 +54,44 @@
         <button id="buttonB" class="print-button">Stampa B</button>
     </div>
 
-    <div class="custom-text">
-        <input type="text" id="textInput" placeholder="Inserisci testo">
-        <button id="printCustom" class="print-button">Stampa Testo</button>
-    </div>
-
     <script>
-        // Funzione per stampare con formattazione avanzata
-        function printWithFormatting(text) {
-            // Configurazione comandi ESC/POS per:
-            // 1. Inizializzare la stampante
-            // 2. Impostare testo in grande (doppia altezza e larghezza)
-            // 3. Aggiungere feed carta finale
-            const escposCommands = [
-                0x1B, 0x40,         // Inizializza stampante
-                0x1B, 0x21, 0x30,   // Imposta testo 2x2 size (0x30 = 00110000 in binario)
-                ...Array.from(text).map(c => c.charCodeAt(0)),  // Converti testo a bytes
-                0x0A, 0x0A, 0x0A   // Feed carta (3 linee)
-            ];
+        document.addEventListener('DOMContentLoaded', function() {
+            // Funzione per stampare con formattazione grande
+            function printWithFormatting(text) {
+                // Comandi ESC/POS per:
+                // 1. Inizializzare stampante
+                // 2. Impostare testo grande (2x2 size)
+                // 3. Aggiungere feed carta
+                const escposCommands = [
+                    0x1B, 0x40,         // Inizializza
+                    0x1B, 0x21, 0x30,   // Testo doppia grandezza
+                    ...Array.from(text).map(c => c.charCodeAt(0)),  // Testo
+                    0x0A, 0x0A, 0x0A    // 3 linee feed
+                ];
 
-            // Converti in formato leggibile dall'app
-            const formattedCommand = escposCommands.map(b => b.toString(16).padStart(2, '0')).join('');
+                // Converti in esadecimale per l'app
+                const hexCommand = escposCommands.map(b => b.toString(16).padStart(2, '0')).join('');
 
-            // Invia all'app Simple Bluetooth Printer
-            window.location.href = `intent://print?data=${encodeURIComponent(formattedCommand)}#Intent;package=com.lyaltamizh.simplebluetoothprinter;scheme=escpos;end`;
-        }
-
-        // Assegna funzioni ai pulsanti
-        document.getElementById('buttonA').addEventListener('click', () => printWithFormatting('A'));
-        document.getElementById('buttonB').addEventListener('click', () => printWithFormatting('B'));
-        document.getElementById('printCustom').addEventListener('click', () => {
-            const text = document.getElementById('textInput').value;
-            if(text) printWithFormatting(text.toUpperCase());
-        });
-
-        // Ottimizzazione per Android
-        document.addEventListener('DOMContentLoaded', () => {
-            if(/Android/i.test(navigator.userAgent)) {
-                // Nascondi la tastiera dopo l'invio su dispositivi mobile
-                document.getElementById('textInput').addEventListener('keypress', (e) => {
-                    if(e.key === 'Enter') {
-                        e.preventDefault();
-                        document.getElementById('printCustom').click();
-                    }
-                });
+                // Invia all'app Simple Bluetooth Printer
+                try {
+                    window.location.href = `intent://print?data=${encodeURIComponent(hexCommand)}#Intent;package=com.lyaltamizh.simplebluetoothprinter;scheme=escpos;end`;
+                } catch (e) {
+                    alert("Errore! Assicurati di avere l'app installata");
+                    console.error(e);
+                }
             }
-        });
-    </script>
 
-    <!-- Fallback per browser desktop -->
-    <script>
+            // Assegna funzioni ai pulsanti
+            document.getElementById('buttonA').addEventListener('click', () => printWithFormatting('A'));
+            document.getElementById('buttonB').addEventListener('click', () => printWithFormatting('B'));
+        });
+
+        // Messaggio se aperto da desktop
         if(!/Android/i.test(navigator.userAgent)) {
             document.body.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
-                    <h2>Questa pagina è ottimizzata per stampanti termiche Bluetooth su Android</h2>
-                    <p>Scansiona il QR code con il tuo smartphone o tablet:</p>
+                    <h2>Questa pagina funziona solo su dispositivi Android</h2>
+                    <p>Scansiona questo QR code con il tuo smartphone:</p>
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}" alt="QR Code">
                 </div>
             `;
