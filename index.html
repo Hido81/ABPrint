@@ -70,14 +70,12 @@
         });
         
         function printLargeCharacter(character) {
-            // Creazione di un documento di stampa con il carattere molto grande
             const printWindow = window.open('', '_blank');
             
-            // Stile per il carattere molto grande
             const style = `
                 <style>
                     @page {
-                        size: 80mm 100mm; /* Formato comune per stampanti termiche */
+                        size: 80mm 100mm;
                         margin: 0;
                     }
                     body {
@@ -97,19 +95,17 @@
                 </style>
             `;
             
-            // Contenuto HTML con il carattere grande
             const content = `
                 ${style}
                 <div class="big-character">${character}</div>
                 <script>
-                    // Stampa automaticamente e chiude la finestra dopo la stampa
                     setTimeout(function() {
                         window.print();
                         setTimeout(function() {
                             window.close();
                         }, 100);
                     }, 100);
-                </script>
+                <\/script>
             `;
             
             printWindow.document.open();
