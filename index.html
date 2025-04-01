@@ -6,7 +6,7 @@
     <title>Stampa Bluetooth</title>
 </head>
 <body>
-    <h2>Stampa su Stampante Termica 0</h2>
+    <h2>Stampa su Stampante Termica 1</h2>
     <button onclick="connectPrinter()">Collega Stampante</button>
     <button onclick="printText()">Stampa e Taglia</button>
 
@@ -15,6 +15,7 @@
         let printerServer;
         let printerService;
         let printerCharacteristic;
+        let ticketNumber = parseInt(localStorage.getItem("ticketNumber")) || 0;
 
         async function connectPrinter() {
             try {
@@ -40,16 +41,24 @@
                 return;
             }
 
-            let text = "Hello, World!\n\n";
+            let numberString = ticketNumber.toString().padStart(3, '0');
+            ticketNumber++;
+            localStorage.setItem("ticketNumber", ticketNumber);
+
+            let esc = '\x1B'; // ESC
+            let gs = '\x1D'; // GS
+            let init = esc + "@"; // Reset
+            let alignCenter = esc + "a" + "1"; // Centratura
+            let doubleSize = gs + "!" + "0x11"; // Doppia altezza e larghezza
+            let text = init + alignCenter + doubleSize + numberString + "\n\n";
+
             let encoder = new TextEncoder();
             let data = encoder.encode(text);
 
             try {
                 await printerCharacteristic.writeValue(data);
                 console.log("Testo inviato alla stampante!");
-
                 await new Promise(resolve => setTimeout(resolve, 500)); 
-
                 await cutPaper();
             } catch (error) {
                 console.error("Errore di stampa: ", error);
