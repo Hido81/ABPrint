@@ -52,7 +52,7 @@
             color: #666;
         }
         .counter {
-            font-size: 4rem; /* Doppia dimensione rispetto alla precedente */
+            font-size: 5rem; /* Aumentata la dimensione dei contatori */
             font-weight: bold;
             display: block;
             margin-top: 10px;
@@ -62,12 +62,12 @@
 <body>
     <h2 ondblclick="connectPrinter()">SAGRA di CAGNOLA 2025</h2>
     <div class="button-container">
-        <button class="magnare" onclick="printText('MAGNARE QUA', '')">
-            MAGNARE QUA'<br>
+        <button class="magnare" onclick="printText('MAGNARE QUA IN COMPAGNIA', '')">
+            MAGNARE QUA' IN COMPAGNIA<br>
             <span id="ticketNumberDisplay" class="counter">000</span>
         </button>
-        <button class="portare" onclick="printText('PORTARE VIA', 'A')">
-            PORTARE VIA<br>
+        <button class="portare" onclick="printText('PORTARE VIA DA ASPORTO', 'A')">
+            PORTARE VIA DA ASPORTO<br>
             <span id="takeawayNumberDisplay" class="counter">A000</span>
         </button>
     </div>
