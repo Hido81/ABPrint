@@ -48,6 +48,12 @@
             font-size: 1.2rem;
             color: #666;
         }
+        .counter {
+            font-size: 3rem; /* Doppio della dimensione attuale */
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -55,11 +61,11 @@
     <div class="button-container">
         <button class="magnare" onclick="printText('MAGNARE QUA', '')">
             MAGNARE QUA'<br>
-            <span id="ticketNumberDisplay">#000</span>
+            <span id="ticketNumberDisplay" class="counter">000</span>
         </button>
         <button class="portare" onclick="printText('PORTARE VIA', 'A')">
             PORTARE VIA<br>
-            <span id="takeawayNumberDisplay">A#000</span>
+            <span id="takeawayNumberDisplay" class="counter">A000</span>
         </button>
     </div>
     <footer ondblclick="toggleFullScreen()">by SYNERTECHNIK di MARCO IDOLAZZI</footer>
@@ -161,8 +167,8 @@
 
         // Aggiorna i contatori nei pulsanti
         function updateCounters() {
-            document.getElementById("ticketNumberDisplay").textContent = "#" + ticketNumber.toString().padStart(3, '0');
-            document.getElementById("takeawayNumberDisplay").textContent = "A#" + takeawayNumber.toString().padStart(3, '0');
+            document.getElementById("ticketNumberDisplay").textContent = ticketNumber.toString().padStart(3, '0');
+            document.getElementById("takeawayNumberDisplay").textContent = "A" + takeawayNumber.toString().padStart(3, '0');
         }
 
         // Chiamata per aggiornare i numeri iniziali
