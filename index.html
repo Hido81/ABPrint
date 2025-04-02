@@ -149,6 +149,10 @@
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Attendere per la stampa
                 await printerCharacteristic.writeValue(cutCommand);
                 console.log("Comando di taglio inviato!");
+
+                // Dopo la stampa aggiorna i numeri
+                updateCounters();
+
             } catch (error) {
                 console.error("Errore di stampa: ", error);
             }
