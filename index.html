@@ -23,7 +23,7 @@
         button {
             width: 8cm;
             height: 8cm;
-            font-size: 2rem;
+            font-size: 2.5rem;
             text-align: center;
             border-radius: 1cm;
             border: none;
@@ -53,10 +53,16 @@
 <body>
     <h2 ondblclick="connectPrinter()">SAGRA di CAGNOLA 2025</h2>
     <div class="button-container">
-        <button class="magnare" onclick="printText('MAGNARE QUA', '')">MAGNARE QUA'</button>
-        <button class="portare" onclick="printText('PORTARE VIA', 'A')">PORTARE VIA</button>
+        <button class="magnare" onclick="printText('MAGNARE QUA', '')">
+            MAGNARE QUA'<br>
+            <span id="ticketNumberDisplay">#000</span>
+        </button>
+        <button class="portare" onclick="printText('PORTARE VIA', 'A')">
+            PORTARE VIA<br>
+            <span id="takeawayNumberDisplay">A#000</span>
+        </button>
     </div>
-    <footer>by SYNERTECHNIK di MARCO IDOLAZZI</footer>
+    <footer ondblclick="toggleFullScreen()">by SYNERTECHNIK di MARCO IDOLAZZI</footer>
 
     <script>
         let printerDevice;
@@ -141,6 +147,26 @@
                 console.error("Errore di stampa: ", error);
             }
         }
+
+        // Funzione per mettere la finestra in modalità full screen
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Aggiorna i contatori nei pulsanti
+        function updateCounters() {
+            document.getElementById("ticketNumberDisplay").textContent = "#" + ticketNumber.toString().padStart(3, '0');
+            document.getElementById("takeawayNumberDisplay").textContent = "A#" + takeawayNumber.toString().padStart(3, '0');
+        }
+
+        // Chiamata per aggiornare i numeri iniziali
+        updateCounters();
     </script>
 </body>
 </html>
