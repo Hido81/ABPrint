@@ -16,6 +16,7 @@
             align-items: center;
             background-color: #f8f8f8;
             font-family: sans-serif;
+            overflow: hidden;
         }
 
         .button-container {
@@ -31,7 +32,7 @@
         .print-button {
             width: 80%;
             height: 10cm;
-            font-size: 2.4rem;
+            font-size: 2.8rem;
             text-align: center;
             border-radius: 1cm;
             border: none;
@@ -44,7 +45,7 @@
             position: absolute;
             bottom: 20px;
             right: 30px;
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: bold;
             opacity: 0.9;
         }
@@ -55,10 +56,35 @@
             right: 20px;
             background-color: black;
             color: white;
-            padding: 15px 25px;
-            font-size: 1rem;
+            padding: 30px 50px;
+            font-size: 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .settings-modal button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+
+        .disabled {
+            background-color: #aaa !important;
         }
     </style>
 </head>
@@ -68,13 +94,18 @@
             MAGNARE QUA' IN COMPAGNIA
             <div id="counter1" class="counter"></div>
         </button>
-        <button class="print-button" onclick="printText('PORTARE VIA', 'A')">
+        <button id="asportoBtn" class="print-button" onclick="printText('PORTARE VIA', 'A')">
             PORTARE VIA DA ASPORTO
             <div id="counter2" class="counter"></div>
         </button>
     </div>
 
-    <button class="fullscreen-button" onclick="openPrinterConnection()">⛶</button>
+    <button class="fullscreen-button" onclick="toggleSettingsModal()">⛶</button>
+
+    <div id="settingsModal" class="settings-modal">
+        <button onclick="connectPrinter()">🔵 Connetti Stampante</button>
+        <label><input type="checkbox" id="toggleAsporto" checked onchange="toggleAsporto()"> Abilita ASPORTO</label>
+    </div>
 
     <script>
         let printerDevice;
@@ -93,8 +124,8 @@
             try {
                 console.log("Cerco stampante...");
                 printerDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true, 
-                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] 
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
                 });
 
                 printerServer = await printerDevice.gatt.connect();
@@ -107,8 +138,21 @@
             }
         }
 
-        function openPrinterConnection() {
-            connectPrinter();
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleAsporto() {
+            const checkbox = document.getElementById('toggleAsporto');
+            const asportoBtn = document.getElementById('asportoBtn');
+            if (checkbox.checked) {
+                asportoBtn.disabled = false;
+                asportoBtn.classList.remove('disabled');
+            } else {
+                asportoBtn.disabled = true;
+                asportoBtn.classList.add('disabled');
+            }
         }
 
         async function printText(type, prefix) {
