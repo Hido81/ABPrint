@@ -22,7 +22,7 @@
         .button-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: center; /* Allineamento centrato */
             gap: 20px;
             width: 100%;
             flex-grow: 1;
@@ -32,14 +32,17 @@
         .print-button {
             width: 80%;
             height: 4.75cm;
-            font-size: 4.0rem;
-            text-align: left;
-            padding-left: 20px;
+            font-size: 4.0rem; /* Riduzione della dimensione del testo */
+            text-align: left; /* Testo allineato a sinistra */
             border-radius: 1cm;
             border: none;
             color: white;
             background-color: #007BFF;
             position: relative;
+            padding-left: 15px; /* Aggiunta della spaziatura interna a sinistra */
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s; /* Aggiunta della transizione per colore */
         }
 
         .counter {
@@ -54,13 +57,14 @@
         .fullscreen-button {
             position: fixed;
             bottom: 0;
-            right: 20px;
+            left: 0;
             background-color: black;
             color: white;
-            padding: 25px 45px;
+            padding: 15px 0;
             font-size: 1.8rem;
             border: none;
             border-radius: 10px;
+            width: 100%; /* Occupy full width */
             z-index: 1001;
         }
 
@@ -97,12 +101,41 @@
 
         .disabled {
             background-color: #aaa !important;
+            color: #666 !important;
+        }
+
+        .counter-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .counter-button {
+            font-size: 1.5rem;
+            padding: 5px 10px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        .counter-button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .counter-value {
+            font-size: 1.5rem;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+            width: 50px;
         }
     </style>
 </head>
 <body>
     <div class="button-container">
-        <button class="print-button" onclick="printText('AL TAVOLO', '')">
+        <button class="print-button" id="button1" onclick="printText('AL TAVOLO', '')">
             AL TAVOLO
             <div id="counter1" class="counter"></div>
         </button>
@@ -110,8 +143,8 @@
             ASPORTO
             <div id="counter2" class="counter"></div>
         </button>
-        <button class="print-button" onclick="printText('GRUPPI', 'G')">
-            GRUPPI PRENOTATI
+        <button class="print-button" id="button3" onclick="printTextGruppi()">
+            GRUPPI<br>PRENOTATI
             <div id="counter3" class="counter"></div>
         </button>
     </div>
@@ -122,17 +155,40 @@
         <button onclick="connectPrinter()">🔵 Connetti Stampante</button>
         <label><input type="checkbox" id="toggleAsporto" checked onchange="toggleAsporto()"> Abilita ASPORTO</label>
         <label><input type="checkbox" id="togglePulizia" onchange="togglePulizia()"> Pulizia</label>
+
+        <button class="counter-button" onclick="refreshPage()">Refresh</button>
+
+        <div class="counter-controls">
+            <div>
+                <label>Contatore AL TAVOLO</label>
+                <div class="counter-controls">
+                    <button class="counter-button" onclick="adjustCounter('ticketNumber', 1)">+</button>
+                    <span class="counter-value" id="counter1-value"></span>
+                    <button class="counter-button" onclick="adjustCounter('ticketNumber', -1)">-</button>
+                </div>
+                <button class="counter-button" onclick="resetCounter('ticketNumber')">RESET</button>
+            </div>
+            <div>
+                <label>Contatore ASPORTO</label>
+                <div class="counter-controls">
+                    <button class="counter-button" onclick="adjustCounter('takeawayNumber', 1)">+</button>
+                    <span class="counter-value" id="counter2-value"></span>
+                    <button class="counter-button" onclick="adjustCounter('takeawayNumber', -1)">-</button>
+                </div>
+                <button class="counter-button" onclick="resetCounter('takeawayNumber')">RESET</button>
+            </div>
+            <div>
+                <label>Contatore GRUPPI</label>
+                <div class="counter-controls">
+                    <button class="counter-button" onclick="adjustCounter('gruppiNumber', 1)">+</button>
+                    <span class="counter-value" id="counter3-value"></span>
+                    <button class="counter-button" onclick="adjustCounter('gruppiNumber', -1)">-</button>
+                </div>
+                <button class="counter-button" onclick="resetCounter('gruppiNumber')">RESET</button>
+            </div>
+        </div>
+
         <button class="close-modal" onclick="toggleSettingsModal()">Chiudi</button>
-        <button onclick="refreshPage()">Refresh</button>
-        <button onclick="adjustCounter('ticketNumber', 1)">+</button>
-        <button onclick="adjustCounter('ticketNumber', -1)">-</button>
-        <button onclick="adjustCounter('ticketNumber', 0)">RESET</button>
-        <button onclick="adjustCounter('takeawayNumber', 1)">+</button>
-        <button onclick="adjustCounter('takeawayNumber', -1)">-</button>
-        <button onclick="adjustCounter('takeawayNumber', 0)">RESET</button>
-        <button onclick="adjustCounter('gruppiNumber', 1)">+</button>
-        <button onclick="adjustCounter('gruppiNumber', -1)">-</button>
-        <button onclick="adjustCounter('gruppiNumber', 0)">RESET</button>
     </div>
 
     <script>
@@ -148,6 +204,9 @@
             document.getElementById('counter1').textContent = ticketNumber.toString().padStart(3, '0');
             document.getElementById('counter2').textContent = takeawayNumber.toString().padStart(3, '0');
             document.getElementById('counter3').textContent = gruppiNumber.toString().padStart(3, '0');
+            document.getElementById('counter1-value').textContent = ticketNumber.toString().padStart(3, '0');
+            document.getElementById('counter2-value').textContent = takeawayNumber.toString().padStart(3, '0');
+            document.getElementById('counter3-value').textContent = gruppiNumber.toString().padStart(3, '0');
         }
 
         async function connectPrinter() {
@@ -186,19 +245,17 @@
         }
 
         function togglePulizia() {
-            const checkbox = document.getElementById('togglePulizia');
+            const isPuliziaChecked = document.getElementById('togglePulizia').checked;
             const buttons = document.querySelectorAll('.print-button');
-            if (checkbox.checked) {
-                buttons.forEach(button => {
+            buttons.forEach(button => {
+                if (isPuliziaChecked) {
                     button.disabled = true;
                     button.classList.add('disabled');
-                });
-            } else {
-                buttons.forEach(button => {
+                } else {
                     button.disabled = false;
                     button.classList.remove('disabled');
-                });
-            }
+                }
+            });
         }
 
         function refreshPage() {
@@ -207,13 +264,27 @@
 
         function adjustCounter(counterName, change) {
             if (counterName === 'ticketNumber') {
-                ticketNumber = Math.max(ticketNumber + change, 0); // Impedisce che il contatore scenda sotto 0
+                ticketNumber += change;
                 localStorage.setItem("ticketNumber", ticketNumber);
             } else if (counterName === 'takeawayNumber') {
-                takeawayNumber = Math.max(takeawayNumber + change, 0); // Impedisce che il contatore scenda sotto 0
+                takeawayNumber += change;
                 localStorage.setItem("takeawayNumber", takeawayNumber);
             } else if (counterName === 'gruppiNumber') {
-                gruppiNumber = Math.max(gruppiNumber + change, 0); // Impedisce che il contatore scenda sotto 0
+                gruppiNumber += change;
+                localStorage.setItem("gruppiNumber", gruppiNumber);
+            }
+            updateCounters();
+        }
+
+        function resetCounter(counterName) {
+            if (counterName === 'ticketNumber') {
+                ticketNumber = 0;
+                localStorage.setItem("ticketNumber", ticketNumber);
+            } else if (counterName === 'takeawayNumber') {
+                takeawayNumber = 0;
+                localStorage.setItem("takeawayNumber", takeawayNumber);
+            } else if (counterName === 'gruppiNumber') {
+                gruppiNumber = 0;
                 localStorage.setItem("gruppiNumber", gruppiNumber);
             }
             updateCounters();
@@ -230,10 +301,6 @@
                 number = takeawayNumber.toString().padStart(3, '0');
                 takeawayNumber++;
                 localStorage.setItem("takeawayNumber", takeawayNumber);
-            } else if (prefix === 'G') {
-                number = gruppiNumber.toString().padStart(3, '0');
-                gruppiNumber++;
-                localStorage.setItem("gruppiNumber", gruppiNumber);
             } else {
                 number = ticketNumber.toString().padStart(3, '0');
                 ticketNumber++;
@@ -279,6 +346,55 @@
             }
         }
 
+        async function printTextGruppi() {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
+            }
+
+            let number = gruppiNumber.toString().padStart(3, '0');
+            gruppiNumber++;
+            localStorage.setItem("gruppiNumber", gruppiNumber);
+            updateCounters();
+
+            let now = new Date();
+            let today = now.toLocaleDateString('it-IT');
+            let time = now.toLocaleTimeString('it-IT');
+
+            let init = new Uint8Array([0x1B, 0x40]);
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
+            let bigText = new Uint8Array([0x1D, 0x21, 0x11]);
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]);
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x55]);
+
+            let textEncoder = new TextEncoder();
+            let line1 = textEncoder.encode("Sagra di Cagnola\n");
+            let line2 = textEncoder.encode("GRUPPI\n\n");
+            let line3 = textEncoder.encode("G" + number + "\n\n");
+            let line4 = textEncoder.encode(today + "\n");
+            let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]);
+
+            try {
+                await printerCharacteristic.writeValue(init);
+                await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line1);
+                await printerCharacteristic.writeValue(veryBigText);
+                await printerCharacteristic.writeValue(line2);
+                await printerCharacteristic.writeValue(extraBigText);
+                await printerCharacteristic.writeValue(line3);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line4);
+                await printerCharacteristic.writeValue(line5);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await printerCharacteristic.writeValue(cutCommand);
+            } catch (error) {
+                console.error("Errore di stampa: ", error);
+            }
+        }
+
+        // Inizializza i contatori
         updateCounters();
     </script>
 </body>
