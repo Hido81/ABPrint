@@ -264,13 +264,13 @@
 
         function adjustCounter(counterName, change) {
             if (counterName === 'ticketNumber') {
-                ticketNumber = Math.max(0, ticketNumber + change); // Limita il valore minimo a 0
+                ticketNumber += change;
                 localStorage.setItem("ticketNumber", ticketNumber);
             } else if (counterName === 'takeawayNumber') {
-                takeawayNumber = Math.max(0, takeawayNumber + change); // Limita il valore minimo a 0
+                takeawayNumber += change;
                 localStorage.setItem("takeawayNumber", takeawayNumber);
             } else if (counterName === 'gruppiNumber') {
-                gruppiNumber = Math.max(0, gruppiNumber + change); // Limita il valore minimo a 0
+                gruppiNumber += change;
                 localStorage.setItem("gruppiNumber", gruppiNumber);
             }
             updateCounters();
@@ -290,53 +290,111 @@
             updateCounters();
         }
 
-        function printText(type, prefix) {
-            const number = prefix + (type === 'AL TAVOLO' ? ticketNumber : takeawayNumber).toString().padStart(3, '0');
-            console.log(`Stampando ${type} numero: ${number}`);
-            if (type === 'AL TAVOLO') {
-                ticketNumber++;
-                localStorage.setItem("ticketNumber", ticketNumber);
-            } else {
+        async function printText(type, prefix) {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
+            }
+
+            let number;
+            if (prefix === 'A') {
+                number = takeawayNumber.toString().padStart(3, '0');
                 takeawayNumber++;
                 localStorage.setItem("takeawayNumber", takeawayNumber);
+            } else {
+                number = ticketNumber.toString().padStart(3, '0');
+                ticketNumber++;
+                localStorage.setItem("ticketNumber", ticketNumber);
             }
+
             updateCounters();
 
-            // Funzione di stampa
-            printToPrinter(number);
+            let now = new Date();
+            let today = now.toLocaleDateString('it-IT');
+            let time = now.toLocaleTimeString('it-IT');
+
+            let init = new Uint8Array([0x1B, 0x40]);
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
+            let bigText = new Uint8Array([0x1D, 0x21, 0x11]);
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]);
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x55]);
+
+            let textEncoder = new TextEncoder();
+            let line1 = textEncoder.encode("Sagra di Cagnola\n");
+            let line2 = textEncoder.encode(type + "\n\n");
+            let line3 = textEncoder.encode(prefix + number + "\n\n");
+            let line4 = textEncoder.encode(today + "\n");
+            let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]);
+
+            try {
+                await printerCharacteristic.writeValue(init);
+                await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line1);
+                await printerCharacteristic.writeValue(veryBigText);
+                await printerCharacteristic.writeValue(line2);
+                await printerCharacteristic.writeValue(extraBigText);
+                await printerCharacteristic.writeValue(line3);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line4);
+                await printerCharacteristic.writeValue(line5);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await printerCharacteristic.writeValue(cutCommand);
+            } catch (error) {
+                console.error("Errore di stampa: ", error);
+            }
         }
 
-        function printTextGruppi() {
-            const number = gruppiNumber.toString().padStart(3, '0');
-            console.log(`Stampando gruppo prenotato numero: ${number}`);
+        async function printTextGruppi() {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
+            }
+
+            let number = gruppiNumber.toString().padStart(3, '0');
             gruppiNumber++;
             localStorage.setItem("gruppiNumber", gruppiNumber);
             updateCounters();
 
-            // Funzione di stampa
-            printToPrinter(number);
-        }
+            let now = new Date();
+            let today = now.toLocaleDateString('it-IT');
+            let time = now.toLocaleTimeString('it-IT');
 
-        async function printToPrinter(number) {
-            if (!printerCharacteristic) {
-                console.log("Stampante non connessa.");
-                return;
-            }
+            let init = new Uint8Array([0x1B, 0x40]);
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
+            let bigText = new Uint8Array([0x1D, 0x21, 0x11]);
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]);
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x55]);
+
+            let textEncoder = new TextEncoder();
+            let line1 = textEncoder.encode("Sagra di Cagnola\n");
+            let line2 = textEncoder.encode("GRUPPI\n\n");
+            let line3 = textEncoder.encode("G" + number + "\n\n");
+            let line4 = textEncoder.encode(today + "\n");
+            let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]);
 
             try {
-                console.log("Invio comando di stampa...");
-
-                // Codice di stampa effettivo, esempio di invio comando
-                const data = new TextEncoder().encode(number);
-                await printerCharacteristic.writeValue(data);
-
-                console.log("Comando di stampa inviato con successo.");
+                await printerCharacteristic.writeValue(init);
+                await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line1);
+                await printerCharacteristic.writeValue(veryBigText);
+                await printerCharacteristic.writeValue(line2);
+                await printerCharacteristic.writeValue(extraBigText);
+                await printerCharacteristic.writeValue(line3);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line4);
+                await printerCharacteristic.writeValue(line5);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await printerCharacteristic.writeValue(cutCommand);
             } catch (error) {
-                console.error("Errore durante la stampa: ", error);
+                console.error("Errore di stampa: ", error);
             }
         }
 
-        // Inizializzazione
+        // Inizializza i contatori
         updateCounters();
     </script>
 </body>
