@@ -113,7 +113,7 @@
             ASPORTO
             <div id="counter2" class="counter"></div>
         </button>
-        <button class="print-button" onclick="printOnlyNumber()">
+        <button class="print-button" onclick="printTextGruppi()">
             GRUPPI<br>PRENOTATI
             <div id="counter3" class="counter"></div>
         </button>
@@ -135,11 +135,12 @@
         let ticketNumber = parseInt(localStorage.getItem("ticketNumber")) || 0;
         let takeawayNumber = parseInt(localStorage.getItem("takeawayNumber")) || 0;
         let onlyNumber = parseInt(localStorage.getItem("onlyNumber")) || 0;
+        let gruppiNumber = parseInt(localStorage.getItem("gruppiNumber")) || 0;
 
         function updateCounters() {
             document.getElementById('counter1').textContent = ticketNumber.toString().padStart(3, '0');
             document.getElementById('counter2').textContent = takeawayNumber.toString().padStart(3, '0');
-            document.getElementById('counter3').textContent = onlyNumber.toString().padStart(3, '0');
+            document.getElementById('counter3').textContent = gruppiNumber.toString().padStart(3, '0');
         }
 
         async function connectPrinter() {
@@ -233,34 +234,51 @@
             }
         }
 
-        async function printOnlyNumber() {
+        async function printTextGruppi() {
             if (!printerCharacteristic) {
                 console.error("Stampante non connessa!");
                 return;
             }
 
-            let number = onlyNumber.toString().padStart(3, '0');
-            onlyNumber++;
-            localStorage.setItem("onlyNumber", onlyNumber);
+            let number = gruppiNumber.toString().padStart(3, '0');
+            gruppiNumber++;
+            localStorage.setItem("gruppiNumber", gruppiNumber);
             updateCounters();
+
+            let now = new Date();
+            let today = now.toLocaleDateString('it-IT');
+            let time = now.toLocaleTimeString('it-IT');
 
             let init = new Uint8Array([0x1B, 0x40]);
             let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
-            let extraBigText = new Uint8Array([0x1D, 0x21, 0x77]); // max size
+            let bigText = new Uint8Array([0x1D, 0x21, 0x11]);
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]);
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x55]);
 
             let textEncoder = new TextEncoder();
-            let line = textEncoder.encode("\n\n" + number + "\n\n\n\n\n\n\n");
+            let line1 = textEncoder.encode("Sagra di Cagnola\n");
+            let line2 = textEncoder.encode("GRUPPI\n\n");
+            let line3 = textEncoder.encode("G" + number + "\n\n");
+            let line4 = textEncoder.encode(today + "\n");
+            let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
             let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]);
 
             try {
                 await printerCharacteristic.writeValue(init);
                 await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line1);
+                await printerCharacteristic.writeValue(veryBigText);
+                await printerCharacteristic.writeValue(line2);
                 await printerCharacteristic.writeValue(extraBigText);
-                await printerCharacteristic.writeValue(line);
+                await printerCharacteristic.writeValue(line3);
+                await printerCharacteristic.writeValue(bigText);
+                await printerCharacteristic.writeValue(line4);
+                await printerCharacteristic.writeValue(line5);
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 await printerCharacteristic.writeValue(cutCommand);
             } catch (error) {
-                console.error("Errore di stampa solo numero: ", error);
+                console.error("Errore di stampa gruppi: ", error);
             }
         }
 
