@@ -31,7 +31,7 @@
 
         .print-button {
             width: 80%;
-            height: 10cm;
+            height: 9.5cm;
             font-size: 2.8rem;
             text-align: center;
             border-radius: 1cm;
@@ -45,21 +45,22 @@
             position: absolute;
             bottom: 20px;
             right: 30px;
-            font-size: 4rem;
+            font-size: 6rem;
             font-weight: bold;
             opacity: 0.9;
         }
 
         .fullscreen-button {
-            position: absolute;
-            bottom: 20px;
+            position: fixed;
+            bottom: 0;
             right: 20px;
             background-color: black;
             color: white;
-            padding: 30px 50px;
-            font-size: 1.5rem;
+            padding: 25px 45px;
+            font-size: 1.8rem;
             border: none;
             border-radius: 10px;
+            z-index: 1001;
         }
 
         .settings-modal {
@@ -75,12 +76,22 @@
             z-index: 1000;
         }
 
-        .settings-modal button {
+        .settings-modal button,
+        .settings-modal label {
             display: block;
             width: 100%;
             margin: 10px 0;
             font-size: 1.2rem;
             padding: 10px;
+        }
+
+        .close-modal {
+            background-color: red;
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            padding: 10px;
+            margin-top: 10px;
         }
 
         .disabled {
@@ -98,6 +109,10 @@
             PORTARE VIA DA ASPORTO
             <div id="counter2" class="counter"></div>
         </button>
+        <button class="print-button" onclick="printOnlyNumber()">
+            SOLO NUMERO GIGANTE
+            <div id="counter3" class="counter"></div>
+        </button>
     </div>
 
     <button class="fullscreen-button" onclick="toggleSettingsModal()">⛶</button>
@@ -105,6 +120,7 @@
     <div id="settingsModal" class="settings-modal">
         <button onclick="connectPrinter()">🔵 Connetti Stampante</button>
         <label><input type="checkbox" id="toggleAsporto" checked onchange="toggleAsporto()"> Abilita ASPORTO</label>
+        <button class="close-modal" onclick="toggleSettingsModal()">Chiudi</button>
     </div>
 
     <script>
@@ -114,10 +130,12 @@
         let printerCharacteristic;
         let ticketNumber = parseInt(localStorage.getItem("ticketNumber")) || 0;
         let takeawayNumber = parseInt(localStorage.getItem("takeawayNumber")) || 0;
+        let onlyNumber = parseInt(localStorage.getItem("onlyNumber")) || 0;
 
         function updateCounters() {
             document.getElementById('counter1').textContent = ticketNumber.toString().padStart(3, '0');
             document.getElementById('counter2').textContent = takeawayNumber.toString().padStart(3, '0');
+            document.getElementById('counter3').textContent = onlyNumber.toString().padStart(3, '0');
         }
 
         async function connectPrinter() {
@@ -178,8 +196,6 @@
             let today = now.toLocaleDateString('it-IT');
             let time = now.toLocaleTimeString('it-IT');
 
-            let esc = '\x1B';
-            let gs = '\x1D';
             let init = new Uint8Array([0x1B, 0x40]);
             let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
             let bigText = new Uint8Array([0x1D, 0x21, 0x11]);
@@ -206,12 +222,41 @@
                 await printerCharacteristic.writeValue(bigText);
                 await printerCharacteristic.writeValue(line4);
                 await printerCharacteristic.writeValue(line5);
-                console.log("Testo inviato alla stampante!");
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 await printerCharacteristic.writeValue(cutCommand);
-                console.log("Comando di taglio inviato!");
             } catch (error) {
                 console.error("Errore di stampa: ", error);
+            }
+        }
+
+        async function printOnlyNumber() {
+            if (!printerCharacteristic) {
+                console.error("Stampante non connessa!");
+                return;
+            }
+
+            let number = onlyNumber.toString().padStart(3, '0');
+            onlyNumber++;
+            localStorage.setItem("onlyNumber", onlyNumber);
+            updateCounters();
+
+            let init = new Uint8Array([0x1B, 0x40]);
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x77]); // max size
+
+            let textEncoder = new TextEncoder();
+            let line = textEncoder.encode("\n\n" + number + "\n\n\n\n\n\n\n");
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]);
+
+            try {
+                await printerCharacteristic.writeValue(init);
+                await printerCharacteristic.writeValue(alignCenter);
+                await printerCharacteristic.writeValue(extraBigText);
+                await printerCharacteristic.writeValue(line);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await printerCharacteristic.writeValue(cutCommand);
+            } catch (error) {
+                console.error("Errore di stampa solo numero: ", error);
             }
         }
 
