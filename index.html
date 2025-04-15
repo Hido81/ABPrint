@@ -3,75 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAGRA di CAGNOLA 2025</title>
+    <title>Stampa Bluetooth</title>
     <style>
-        body {
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f8f8f8;
+            font-family: sans-serif;
+        }
+
+        .button-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 20px;
+            width: 100%;
+            flex-grow: 1;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-            font-family: Arial, sans-serif;
         }
-        .button-container {
-            display: flex;
-            gap: 30px;
-            margin-top: 20px;
-        }
-        button {
-            width: 10cm;
+
+        .print-button {
+            width: 80%;
             height: 10cm;
-            font-size: 3rem;
+            font-size: 2.4rem;
             text-align: center;
             border-radius: 1cm;
             border: none;
-            cursor: pointer;
-            font-weight: bold;
             color: white;
-            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            background-color: #007BFF;
+            position: relative;
         }
-        .magnare {
-            background-color: #ff5733;
-        }
-        .portare {
-            background-color: #337aff;
-        }
-        h2 {
-            cursor: pointer;
-            user-select: none;
-            color: #333;
-            font-size: 3rem; /* Aumentata la dimensione del titolo */
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        footer {
-            margin-top: 20px;
-            font-size: 1.2rem;
-            color: #666;
-        }
+
         .counter {
-            font-size: 5rem; /* Aumentata la dimensione dei contatori */
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 3rem;
             font-weight: bold;
-            display: block;
-            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .fullscreen-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: black;
+            color: white;
+            padding: 15px 25px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
-    <h2 ondblclick="connectPrinter()">SAGRA di CAGNOLA 2025</h2>
     <div class="button-container">
-        <button class="magnare" onclick="printText('MAGNARE QUA IN COMPAGNIA', '')">
-            MAGNARE QUA' IN COMPAGNIA<br>
-            <span id="ticketNumberDisplay" class="counter">000</span>
+        <button class="print-button" onclick="printText('MAGNARE QUA', '')">
+            MAGNARE QUA' IN COMPAGNIA
+            <div id="counter1" class="counter"></div>
         </button>
-        <button class="portare" onclick="printText('PORTARE VIA DA ASPORTO', 'A')">
-            PORTARE VIA DA ASPORTO<br>
-            <span id="takeawayNumberDisplay" class="counter">A000</span>
+        <button class="print-button" onclick="printText('PORTARE VIA', 'A')">
+            PORTARE VIA DA ASPORTO
+            <div id="counter2" class="counter"></div>
         </button>
     </div>
-    <footer ondblclick="toggleFullScreen()">by SYNERTECHNIK di MARCO IDOLAZZI</footer>
+
+    <button class="fullscreen-button" onclick="openPrinterConnection()">⛶</button>
 
     <script>
         let printerDevice;
@@ -80,6 +83,11 @@
         let printerCharacteristic;
         let ticketNumber = parseInt(localStorage.getItem("ticketNumber")) || 0;
         let takeawayNumber = parseInt(localStorage.getItem("takeawayNumber")) || 0;
+
+        function updateCounters() {
+            document.getElementById('counter1').textContent = ticketNumber.toString().padStart(3, '0');
+            document.getElementById('counter2').textContent = takeawayNumber.toString().padStart(3, '0');
+        }
 
         async function connectPrinter() {
             try {
@@ -99,6 +107,10 @@
             }
         }
 
+        function openPrinterConnection() {
+            connectPrinter();
+        }
+
         async function printText(type, prefix) {
             if (!printerCharacteristic) {
                 console.error("Stampante non connessa!");
@@ -116,25 +128,27 @@
                 localStorage.setItem("ticketNumber", ticketNumber);
             }
 
+            updateCounters();
+
             let now = new Date();
             let today = now.toLocaleDateString('it-IT');
             let time = now.toLocaleTimeString('it-IT');
 
-            let esc = '\x1B'; // ESC
-            let gs = '\x1D'; // GS
-            let init = new Uint8Array([0x1B, 0x40]); // Reset
-            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]); // Centratura
-            let bigText = new Uint8Array([0x1D, 0x21, 0x11]); // Doppia altezza e larghezza
-            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]); // Carattere molto grande per titolo
-            let extraBigText = new Uint8Array([0x1D, 0x21, 0x44]); // Numero progressivo molto grande
-            
+            let esc = '\x1B';
+            let gs = '\x1D';
+            let init = new Uint8Array([0x1B, 0x40]);
+            let alignCenter = new Uint8Array([0x1B, 0x61, 0x01]);
+            let bigText = new Uint8Array([0x1D, 0x21, 0x11]);
+            let veryBigText = new Uint8Array([0x1D, 0x21, 0x33]);
+            let extraBigText = new Uint8Array([0x1D, 0x21, 0x55]);
+
             let textEncoder = new TextEncoder();
             let line1 = textEncoder.encode("Sagra di Cagnola\n");
             let line2 = textEncoder.encode(type + "\n\n");
             let line3 = textEncoder.encode(prefix + number + "\n\n");
             let line4 = textEncoder.encode(today + "\n");
             let line5 = textEncoder.encode(time + "\n\n\n\n\n\n");
-            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]); // Taglio carta
+            let cutCommand = new Uint8Array([0x1D, 0x56, 0x00]);
 
             try {
                 await printerCharacteristic.writeValue(init);
@@ -149,36 +163,14 @@
                 await printerCharacteristic.writeValue(line4);
                 await printerCharacteristic.writeValue(line5);
                 console.log("Testo inviato alla stampante!");
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Attendere per la stampa
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 await printerCharacteristic.writeValue(cutCommand);
                 console.log("Comando di taglio inviato!");
-
-                // Dopo la stampa aggiorna i numeri
-                updateCounters();
-
             } catch (error) {
                 console.error("Errore di stampa: ", error);
             }
         }
 
-        // Funzione per mettere la finestra in modalità full screen
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
-
-        // Aggiorna i contatori nei pulsanti
-        function updateCounters() {
-            document.getElementById("ticketNumberDisplay").textContent = ticketNumber.toString().padStart(3, '0');
-            document.getElementById("takeawayNumberDisplay").textContent = "A" + takeawayNumber.toString().padStart(3, '0');
-        }
-
-        // Chiamata per aggiornare i numeri iniziali
         updateCounters();
     </script>
 </body>
