@@ -42,6 +42,7 @@
             padding-left: 15px; /* Aggiunta della spaziatura interna a sinistra */
             display: flex;
             align-items: center;
+            transition: background-color 0.3s, color 0.3s; /* Aggiunta della transizione per colore */
         }
 
         .counter {
@@ -100,12 +101,13 @@
 
         .disabled {
             background-color: #aaa !important;
+            color: #666 !important;
         }
     </style>
 </head>
 <body>
     <div class="button-container">
-        <button class="print-button" onclick="printText('AL TAVOLO', '')">
+        <button class="print-button" id="button1" onclick="printText('AL TAVOLO', '')">
             AL TAVOLO
             <div id="counter1" class="counter"></div>
         </button>
@@ -113,7 +115,7 @@
             ASPORTO
             <div id="counter2" class="counter"></div>
         </button>
-        <button class="print-button" onclick="printTextGruppi()">
+        <button class="print-button" id="button3" onclick="printTextGruppi()">
             GRUPPI<br>PRENOTATI
             <div id="counter3" class="counter"></div>
         </button>
@@ -124,6 +126,7 @@
     <div id="settingsModal" class="settings-modal">
         <button onclick="connectPrinter()">🔵 Connetti Stampante</button>
         <label><input type="checkbox" id="toggleAsporto" checked onchange="toggleAsporto()"> Abilita ASPORTO</label>
+        <label><input type="checkbox" id="togglePulizia" onchange="togglePulizia()"> Pulizia</label>
         <button class="close-modal" onclick="toggleSettingsModal()">Chiudi</button>
     </div>
 
@@ -176,6 +179,20 @@
                 asportoBtn.disabled = true;
                 asportoBtn.classList.add('disabled');
             }
+        }
+
+        function togglePulizia() {
+            const isPuliziaChecked = document.getElementById('togglePulizia').checked;
+            const buttons = document.querySelectorAll('.print-button');
+            buttons.forEach(button => {
+                if (isPuliziaChecked) {
+                    button.disabled = true;
+                    button.classList.add('disabled');
+                } else {
+                    button.disabled = false;
+                    button.classList.remove('disabled');
+                }
+            });
         }
 
         async function printText(type, prefix) {
